@@ -1,0 +1,111 @@
+# Architecture
+
+A JSON contract and a `DataFrame` go in; a figure comes out. In between there
+are six stages, each with a defined output type.
+
+```
+JSON contract ─▶ normalize ─▶ validate ─▶ bind ─▶ transform ─▶ render ─▶ export
+                              │           │
+DataFrame ────────────────────┘           └─▶ list[SpecError]  (JSON, to the agent)
+```
+
+| Stage | Module | In | Out |
+|---|---|---|---|
+| 1 · normalize | `spec/dialects.py` | raw dict | canonical dict |
+| 2 · validate | `spec/parse.py` | canonical dict | `Spec` or `list[SpecError]` |
+| 3 · bind | `binding/binder.py` | `Spec` × `DataFrame` | `BoundSpec` or errors |
+| 4 · transform | `transform/pipeline.py` | `BoundSpec` | plot frame |
+| 5 · render | `render/driver.py` | plot frame | `Figure` |
+| 6 · export | `render/driver.py` | `Figure` | figure, png, svg or base64 |
+
+Anything that can fail because of the contract fails in stages 2 and 3, before
+matplotlib is touched at all.
+
+## The plot frame
+
+This is the core's boundary: a `DataFrame` whose columns are named after
+channels (`x`, `y`, `color`, `size`, `style`, `facet`) rather than after the
+user's columns. Past that point no renderer needs to know where a value came
+from, and the core's tests can assert on data instead of on pixels:
+
+```python
+jp.build_frame({"viz_type": "bar", "x_axis": "region",
+                "y_axis": "revenue", "agg": "sum"}, df)
+#         x          y
+# 0 Central  390340.21
+# 1    East  412142.26
+```
+
+## Core and backends
+
+`spec/`, `binding/` and `transform/` never import matplotlib. A new backend
+implements `Renderer.draw(ax, ctx)` and registers itself:
+
+```python
+from jsonplot.render.registry import register
+from jsonplot.render.base import Renderer
+
+@register("waterfall", "matplotlib")
+class Waterfall(Renderer):
+    def draw(self, ax, ctx):
+        ...   # ctx.pf is the plot frame; ctx.colors, the palette already assigned
+```
+
+Titles, grid, legend and facets are the driver's job, identical for every type.
+If a renderer ever needed to filter or aggregate something, the abstraction
+would be in the wrong place.
+
+## Order of operations
+
+Fixed, and declared in `transform/pipeline.py`:
+
+`filter → derive (time_unit, bin) → aggregate → sort → limit`
+
+`limit` runs after `sort`, so `sort: "-y"` + `limit: 10` gives the top 10 by
+value and `sort: "x"` + `limit: 10` gives the first ten in axis order. It trims
+categories, never loose rows: splitting a group would produce a wrong figure.
+
+Filters are applied in `bind` rather than in `transform`, because the duplicate,
+cardinality and empty-result checks have to see the rows that will actually be
+drawn.
+
+## Errors
+
+`SpecError(code, path, message, hint, did_you_mean)`, JSON-serializable. They
+are all collected rather than raised one at a time: an agent repairs better with
+the full list.
+
+| Code | When |
+|---|---|
+| `INVALID_JSON` | the contract is not a JSON object |
+| `UNKNOWN_FIELD` | a key that does not exist at that level |
+| `MISSING_FIELD` | a required schema field is absent |
+| `INVALID_VALUE` | a value outside the vocabulary |
+| `UNSUPPORTED_VERSION` | a `version` this build does not speak |
+| `COLUMN_NOT_FOUND` | the column is not in the DataFrame |
+| `TYPE_MISMATCH` | the declared type does not fit the dtype, or the channel rejects it |
+| `AGGREGATE_REQUIRED` | repeated rows on the axis with no `aggregate` |
+| `AGGREGATE_INVALID` | an aggregation impossible for that dtype |
+| `CARDINALITY_TOO_HIGH` | more categories than the channel can distinguish |
+| `MISSING_CHANNEL` | a channel the chart type requires is absent |
+| `CHANNEL_NOT_SUPPORTED` | that `viz_type` does not use that channel |
+| `EMPTY_RESULT` | the filters leave zero rows |
+| `RENDERER_NOT_FOUND` | that backend does not draw that type |
+
+## Color
+
+Categorical hues are assigned **in fixed order and never recycled**: color
+follows the entity, not its rank, so filtering series does not repaint the
+survivors. The default palette is validated (lightness band, chroma, separation
+for color vision deficiencies, and contrast) on both a light and a dark surface,
+and it has eight slots. A ninth series does not generate a new color: it is a
+`CARDINALITY_TOO_HIGH` resolved by folding, filtering or faceting.
+
+A quantitative `color` channel consumes no slots: it goes to a single-hue
+continuous ramp.
+
+## Status
+
+Implemented: phases 01 through 06 of the plan. Outstanding from phase 07: entry
+point registration for external packages, and documentation generated from the
+schema.
