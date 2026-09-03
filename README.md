@@ -1,4 +1,4 @@
-# jsonplot
+# JsonPlot
 
 A JSON contract and a `DataFrame` go in; a matplotlib figure comes out.
 
