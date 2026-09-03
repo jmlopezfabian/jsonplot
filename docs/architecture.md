@@ -152,7 +152,10 @@ adding an aggregation without a line of prose about it fails the build.
 
 Consumers: `jp.contract(df)`, `agent.context(df)` (the briefing plus the
 columns), `tool_definition()` (the briefing, minus what the JSON Schema already
-says), `jsonplot contract` and the Streamlit editor.
+says), `jsonplot contract`, the Streamlit editor, and
+`examples/pydantic_ai_agent.ipynb`, where it is an agent's `instructions` while
+`Spec` is its `output_type` and `jp.validate` its `output_validator` — the
+repair loop of `agent.repair`, driven by someone else's framework.
 
 Sections can be dropped with `include=` when the prompt budget is tight; the
 load-bearing ones are `types`, `channels` and `rules`.

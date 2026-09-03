@@ -140,6 +140,12 @@ uv run python examples/gallery.py out/
 uv run streamlit run examples/streamlit_app.py   # a live contract editor
 ```
 
+`examples/pydantic_ai_agent.ipynb` wires the whole thing to a
+[Pydantic AI](https://ai.pydantic.dev) agent running on a local model: the
+contract is the agent's `output_type`, `jp.validate` is an `output_validator`,
+and `ModelRetry` carries the structured errors back — the repair loop with no
+loop to write. It is committed with its output, so it reads without running.
+
 ## Tests
 
 ```bash
