@@ -1,0 +1,31 @@
+/* The site borrows the library's own palette: the blue is the first series
+   color, so a chart on the page and the page's chrome agree. */
+:root {
+  --md-primary-fg-color:        #2a78d6;
+  --md-primary-fg-color--light: #3987e5;
+  --md-primary-fg-color--dark:  #256abf;
+  --md-accent-fg-color:         #eb6834;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #3987e5;
+  --md-accent-fg-color:  #d95926;
+  --md-hue: 220;
+}
+
+/* Charts are drawn on a transparent surface; give them the page's ground
+   rather than a white rectangle floating in the dark theme. */
+.md-typeset .gallery img,
+.md-typeset article img {
+  border-radius: 6px;
+  background: var(--md-default-bg-color);
+}
+
+.md-typeset .grid.cards > ul > li {
+  border-radius: 8px;
+}
+
+/* Contracts sit under their chart: keep the pair visually attached. */
+.md-typeset h2 + p + div.highlight {
+  margin-top: 0.4rem;
+}

@@ -1,0 +1,59 @@
+name: docs
+
+# The site is built from the code, not from a copy of it: the contract page,
+# the gallery and the CLI reference are all generated during this build. So the
+# deploy is the only thing that keeps them true, and it runs on every push.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  DISABLE_MKDOCS_2_WARNING: "true"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install
+        # the dev group already carries seaborn and streamlit, which the tests,
+        # the gallery and the contract snapshot all need
+        run: uv sync --group docs
+
+      - name: The committed contract must match what the code generates
+        run: uv run jsonplot contract -o docs/CONTRACT.md --check
+
+      - name: Test
+        run: uv run pytest -q
+
+      - name: Build
+        run: uv run --group docs mkdocs build --strict
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

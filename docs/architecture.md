@@ -184,6 +184,20 @@ for amounts, `mean` for rates) and repeating it in the type table removed
 almost all of them, without a repair round. The eval is how the document
 gets edited; the alternative is guessing.
 
+## The site
+
+`mkdocs.yml` serves this `docs/` directory. Four pages are not in it because
+`scripts/gen_docs.py` writes them during the build: the gallery (the contracts
+in `examples/gallery.py`, actually rendered), the CLI reference (argparse's own
+help), the error table (the `Code` class), and the notebook (copied from
+`examples/`). `docs/CONTRACT.md` is committed rather than generated at build
+time so that `--check` can fail a pull request, but it is the same document.
+
+The rule is the one the briefing follows: if a page states a fact the code
+already knows, the page is built from the code. `.github/workflows/docs.yml`
+runs the tests and the snapshot check before it deploys, so the published site
+cannot describe a library that failed its own tests.
+
 ## Status
 
 Implemented: phases 01 through 07 of the plan. Outstanding: entry point

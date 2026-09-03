@@ -2,6 +2,8 @@
 
 A JSON contract and a `DataFrame` go in; a matplotlib figure comes out.
 
+**[Documentation →](https://jmlopezfabian.github.io/JsonPlot/)** · [gallery](https://jmlopezfabian.github.io/JsonPlot/gallery/) · [the contract](https://jmlopezfabian.github.io/JsonPlot/CONTRACT/) · [agents](https://jmlopezfabian.github.io/JsonPlot/agents/)
+
 ```python
 import jsonplot as jp
 
@@ -157,3 +159,16 @@ uv run pytest
 
 See `docs/architecture.md` for the pipeline, the error model, and how to add a
 chart type or a backend.
+
+## The documentation site
+
+```bash
+uv sync --group docs
+uv run --group docs mkdocs serve
+```
+
+The gallery, the CLI reference and the contract page are **generated during the
+build** by `scripts/gen_docs.py` — the charts are rendered, the CLI help comes
+from argparse, the error codes from the `Code` class. A push to `main` deploys
+it to GitHub Pages (`.github/workflows/docs.yml`), and the workflow refuses to
+deploy if `docs/CONTRACT.md` no longer matches what the code generates.
