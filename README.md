@@ -38,7 +38,7 @@ it is wrong the failure is actionable.
 ## Install
 
 ```bash
-uv sync            # or: pip install -e ".[seaborn]"
+uv sync            # or: pip install -e ".[seaborn,streamlit]"
 ```
 
 ## Two dialects
@@ -82,10 +82,31 @@ jsonplot schema                            # the contract's JSON Schema
 jsonplot types                             # available types and backends
 ```
 
+## In Streamlit
+
+```python
+import jsonplot.streamlit as jps
+
+jps.st_plot(spec, df)                 # draws it, or shows the errors
+png = jps.png(spec, df)               # bytes, for st.download_button or a cache
+```
+
+`st_plot` returns `[]` when it drew and the list of `SpecError` when it could
+not: in an app, a contract the data does not support should show what is wrong,
+not take the page down. It also picks up the app's light or dark appearance
+(unless the contract chose a theme), draws on a transparent surface so the chart
+sits on the app's own background, and never leaves a figure open — otherwise
+every rerun would leak one.
+
+```python
+jps.st_plot(spec, df, target=col2, theme="dark", errors="raise")
+```
+
 ## Examples
 
 ```bash
 uv run python examples/gallery.py out/
+uv run streamlit run examples/streamlit_app.py   # a live contract editor
 ```
 
 ## Tests

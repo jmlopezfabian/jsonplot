@@ -104,6 +104,26 @@ and it has eight slots. A ninth series does not generate a new color: it is a
 A quantitative `color` channel consumes no slots: it goes to a single-hue
 continuous ramp.
 
+## Hosts
+
+A host is a consumer of stage 6, not a stage: the CLI (`cli.py`) and the
+Streamlit adapter (`streamlit.py`) both sit past `export` and neither is
+imported by the core, so `import jsonplot` does not import Streamlit and the
+dependency stays optional (`pip install "jsonplot[streamlit]"`).
+
+The Streamlit adapter exists because that host has three constraints the
+library's defaults get wrong, and all three live at the boundary:
+
+| Constraint | What the adapter does |
+|---|---|
+| the script reruns on every interaction | closes the figure; `png()` returns bytes, which `st.cache_data` can memoize |
+| the app has its own appearance | resolves `theme="auto"` from `st.context.theme`, unless the contract set a theme |
+| a traceback kills the page | catches `SpecErrorGroup` and renders the errors as an element, returning them to the caller |
+
+It renders PNG bytes and hands them to `st.image` rather than calling
+`st.pyplot`, which fixes its own dpi and deprecates savefig arguments: the
+contract's `dpi` and a transparent surface would both be lost.
+
 ## Status
 
 Implemented: phases 01 through 06 of the plan. Outstanding from phase 07: entry

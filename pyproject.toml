@@ -12,6 +12,7 @@ dependencies = [
 
 [project.optional-dependencies]
 seaborn = ["seaborn>=0.13"]
+streamlit = ["streamlit>=1.30"]
 
 [project.scripts]
 jsonplot = "jsonplot.cli:main"
@@ -20,6 +21,7 @@ jsonplot = "jsonplot.cli:main"
 dev = [
     "pytest>=8.0",
     "seaborn>=0.13",
+    "streamlit>=1.30",
 ]
 
 [build-system]
