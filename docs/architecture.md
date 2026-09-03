@@ -124,8 +124,64 @@ It renders PNG bytes and hands them to `st.image` rather than calling
 `st.pyplot`, which fixes its own dpi and deprecates savefig arguments: the
 contract's `dpi` and a transparent surface would both be lost.
 
+## The briefing
+
+`spec/briefing.py` writes the contract out as a document for whoever has to
+produce one — a model, or a person. Every fact in it is read at call time from
+the definition that the framework actually executes:
+
+| Section | Source |
+|---|---|
+| chart types, channels, accepted scale types | `CAPABILITIES` |
+| which backends exist here | `render.registry.available()` |
+| aggregations, time units, filter operators, scales, output formats | the `Literal`s in `spec/models.py`, via `get_type_hints` |
+| palettes and themes | `theme.PALETTES`, `theme.THEMES` |
+| the flat dialect's accepted keys and synonyms | the alias tables in `spec/dialects.py` |
+| the columns of this DataFrame | `describe_dataframe` |
+
+Nothing is transcribed. A briefing maintained by hand alongside the code is
+stale by the second commit, and a stale briefing is worse than none: it tells
+the model a chart type exists that no longer does, and hides the one that
+replaced it.
+
+`coverage()` is what enforces that. It returns every enumerated value the
+document fails to mention, and `test_briefing.py` asserts it is empty — so
+adding an aggregation without a line of prose about it fails the build.
+`docs/CONTRACT.md` is a generated snapshot of the same document, checked by
+`jsonplot contract -o docs/CONTRACT.md --check`.
+
+Consumers: `jp.contract(df)`, `agent.context(df)` (the briefing plus the
+columns), `tool_definition()` (the briefing, minus what the JSON Schema already
+says), `jsonplot contract` and the Streamlit editor.
+
+Sections can be dropped with `include=` when the prompt budget is tight; the
+load-bearing ones are `types`, `channels` and `rules`.
+
+### Whether it earns its size
+
+`evals/local_llm.py` runs twelve natural-language requests through a local
+model and validates every contract that comes back. With qwen2.5:7b-instruct:
+
+| Prompt | Correct outcomes |
+|---|---|
+| columns + a sentence naming the flat keys | 6 / 12 |
+| columns + the briefing | 11 / 12 |
+| ...plus one repair round | 12 / 12 |
+
+One request asks for a 3D surface, which the framework does not draw; there a
+rejection is the correct outcome and is scored as such. The last point or two
+moves between runs — a 7B model is not deterministic even at temperature 0 — so
+read the gap, not the digits.
+
+The first run of that eval is also what produced rule 5 in its current form.
+The briefing fixed every vocabulary error but left the model omitting
+`aggregate` on six of twelve contracts, because the rule was stated abstractly.
+Naming the failure ("the data is one row per record"), giving a default (`sum`
+for amounts, `mean` for rates) and repeating it in the type table removed
+almost all of them, without a repair round. The eval is how the document
+gets edited; the alternative is guessing.
+
 ## Status
 
-Implemented: phases 01 through 06 of the plan. Outstanding from phase 07: entry
-point registration for external packages, and documentation generated from the
-schema.
+Implemented: phases 01 through 07 of the plan. Outstanding: entry point
+registration for external packages.

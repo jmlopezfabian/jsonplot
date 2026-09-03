@@ -15,22 +15,43 @@ import pandas as pd
 
 from .api import describe_dataframe, plot, validate
 from .binding.errors import SpecError
+from .spec.briefing import SECTION_NAMES, contract
 from .spec.schema import capability_summary, json_schema, tool_definition
 
 __all__ = [
-    "context", "json_schema", "tool_definition", "capability_summary",
-    "repair", "RepairResult", "errors_as_json",
+    "context", "contract", "columns", "json_schema", "tool_definition",
+    "capability_summary", "SECTION_NAMES", "repair", "RepairResult",
+    "errors_as_json",
 ]
 
 #: How many repair attempts are worth granting before degrading.
 DEFAULT_ATTEMPTS = 2
 
 
-def context(df: pd.DataFrame, examples: int = 3) -> str:
-    """The context block to put in the prompt, before asking for a contract.
+def context(
+    df: pd.DataFrame,
+    examples: int = 3,
+    sections: tuple[str, ...] | None = None,
+) -> str:
+    """Everything the model needs before it writes a contract: this data, and
+    the contract itself.
 
-    Showing the real columns eliminates most COLUMN_NOT_FOUND errors, which are
-    by far the most common failure.
+    The contract half is generated from the live definitions (see
+    `jsonplot.spec.briefing`), so it never describes a version of the framework
+    that no longer exists. Narrow it with `sections` when the prompt budget is
+    tight — `("types", "channels", "rules")` is the load-bearing part.
+    """
+    doc = contract(df, include=sections, examples=examples)
+    assert isinstance(doc, str)
+    return doc
+
+
+def columns(df: pd.DataFrame, examples: int = 3) -> str:
+    """Just the column list.
+
+    Naming the real columns eliminates most COLUMN_NOT_FOUND errors, which are
+    by far the most common failure; when the contract is already in the system
+    prompt, this is all a turn needs to add.
     """
     desc = describe_dataframe(df, examples)
     lines = [f"DataFrame: {desc['n_rows']} rows, {len(desc['columns'])} columns", ""]
@@ -44,7 +65,6 @@ def context(df: pd.DataFrame, examples: int = 3) -> str:
         if info["n_null"]:
             bits.append(f"{info['n_null']} nulls")
         lines.append("  - " + "; ".join(bits))
-    lines += ["", capability_summary()]
     return "\n".join(lines)
 
 

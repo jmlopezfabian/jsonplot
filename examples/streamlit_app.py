@@ -82,6 +82,11 @@ with editor:
         st.dataframe(df.head(20))
         st.json(jp.describe_dataframe(df), expanded=False)
 
+    with st.expander("The contract, as the model receives it"):
+        st.caption("Generated from the live definitions — this is exactly what "
+                   "`agent.context(df)` puts in the prompt.")
+        st.code(jp.contract(df), language="markdown")
+
 with canvas:
     errors = jps.st_plot(contract, df, theme=theme)
     if errors:
