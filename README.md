@@ -144,7 +144,10 @@ uv run streamlit run examples/streamlit_app.py   # a live contract editor
 [Pydantic AI](https://ai.pydantic.dev) agent running on a local model: the
 contract is the agent's `output_type`, `jp.validate` is an `output_validator`,
 and `ModelRetry` carries the structured errors back — the repair loop with no
-loop to write. It is committed with its output, so it reads without running.
+loop to write. It also holds a conversation (`message_history`), diffing each
+follow-up against the previous contract so the drift a small model introduces is
+visible rather than merely plausible. Committed with its output, so it reads
+without running.
 
 ## Tests
 
