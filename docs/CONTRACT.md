@@ -180,11 +180,61 @@ equally valid; when a contract carries both, the canonical block wins.
 | `data.sort` | `sort`, `sort_by` |
 | `data.limit` | `limit`, `top_n` |
 
-`viz_type` itself may be spelled `chart_type`, `kind`, `plot_type`, `type`.
+`viz_type` itself may be spelled `chart_type`, `kind`, `mark`, `plot_type`, `type`.
 
-`viz_type` synonyms: `areachart` → `area`, `barh` → `bar`, `barplot` → `bar`, `bars` → `bar`, `boxplot` → `box`, `column` → `bar`, `histogram` → `hist`, `histplot` → `hist`, `linechart` → `line`, `lineplot` → `line`, `points` → `scatter`, `scatterplot` → `scatter`, `timeseries` → `line`, `violinplot` → `violin`.
+`viz_type` synonyms: `areachart` → `area`, `barh` → `bar`, `barplot` → `bar`, `bars` → `bar`, `boxplot` → `box`, `circle` → `scatter`, `column` → `bar`, `histogram` → `hist`, `histplot` → `hist`, `linechart` → `line`, `lineplot` → `line`, `point` → `scatter`, `points` → `scatter`, `scatterplot` → `scatter`, `square` → `scatter`, `tick` → `scatter`, `timeseries` → `line`, `trail` → `line`, `violinplot` → `violin`.
 
 These `style` keys are also accepted at the top level: `title`, `subtitle`, `x_label`, `y_label`, `legend_title`, `palette`, `theme`, `figsize`, `grid`, `legend`, `stacked`, `orientation`, `annotate`. And these `output` keys: `dpi`, `path`, `transparent`, `format`.
+
+## Vega-Lite spellings
+
+If you know Vega-Lite, write it and it will be translated. The canonical
+spec above is deliberately shaped like it — same `encoding`, same channel
+roles, same field definitions — so most of a Vega-Lite chart already is a
+valid contract.
+
+Accepted, and what each becomes:
+
+| Vega-Lite | here |
+| --- | --- |
+| `mark` (a string, or `{"type": ...}`) | `viz_type` |
+| `"mark": "boxplot"` | `"viz_type": "box"` |
+| `"mark": "circle"` | `"viz_type": "scatter"` |
+| `"mark": "point"` | `"viz_type": "scatter"` |
+| `"mark": "square"` | `"viz_type": "scatter"` |
+| `"mark": "tick"` | `"viz_type": "scatter"` |
+| `"mark": "trail"` | `"viz_type": "line"` |
+| `encoding.column` | `encoding.facet` |
+| `encoding.row` | `encoding.facet` |
+| `encoding.shape` | `encoding.style` |
+| `encoding.strokeDash` | `encoding.style` |
+| `timeUnit` | `time_unit`; the `year…` forms map to the bucket they name |
+| `"type": "Q"` / `"N"` / `"O"` / `"T"` | `quantitative`, `nominal`, `ordinal`, `temporal` |
+| `average`, `distinct`, `stdev`, `stdevp` | `mean`, `nunique`, `std`, `std` |
+| `scale: {"type": "log"}` | `scale: "log"` |
+| `axis: {"title": …}`, `legend: {"title": …}` | the channel's `title` |
+| a channel's `sort` (`"-y"`, `"descending"`, `{"field": …}`) | `data.sort` |
+| a channel's `stack` | `style.stacked` |
+| `width` and `height`, in pixels | `style.figsize`, in inches (at 100 px/inch) |
+| `$schema` | dropped; it names a Vega-Lite version, and this is not one |
+
+**Not accepted**, because there is no equivalent — each fails with a hint
+pointing at the nearest thing that exists:
+
+- `transform` — use aggregate, bin or time_unit on the channel, and data.filters, data.sort and data.limit for the rest
+- `layer` — one chart per contract; draw the second one separately
+- `hconcat` — one chart per contract; draw the second one separately
+- `vconcat` — one chart per contract; draw the second one separately
+- `concat` — one chart per contract; draw the second one separately
+- `repeat` — use encoding.facet
+- `params` — this framework draws static figures
+- `selection` — this framework draws static figures
+- `config` — use the style block
+- `resolve` — use facet.share_x and facet.share_y
+- `projection` — there are no map projections here
+
+And `data` here is not Vega-Lite's `data`: the DataFrame is passed to the
+renderer separately, so this block holds filters, sorting and limits only.
 
 ## Rules the validator enforces
 

@@ -88,6 +88,7 @@ through a local model and validates every contract that comes back:
 | Prompt | Correct outcomes |
 | --- | --- |
 | columns + a sentence naming the keys | 6 / 12 |
+| columns + "write me Vega-Lite" | 5 / 12 |
 | columns + the generated contract | 11 / 12 |
 | …plus one repair round | 12 / 12 |
 

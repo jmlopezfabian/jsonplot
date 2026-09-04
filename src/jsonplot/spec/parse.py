@@ -71,9 +71,10 @@ def _translate(exc: ValidationError) -> list[SpecError]:
         if code is Code.UNKNOWN_FIELD:
             name = str(loc[-1]) if loc else "?"
             canonical, every = _candidates(loc[:-1])
+            generic = ("fields accepted here: " + ", ".join(canonical)) if canonical else None
             out.append(SpecError(
                 code, path, f"unknown field: {name!r}",
-                hint=("fields accepted here: " + ", ".join(canonical)) if canonical else None,
+                hint=_vega_lite_hint(loc[:-1], name) or generic,
                 did_you_mean=close_matches(name, every),
             ))
         elif code is Code.MISSING_FIELD:
@@ -91,6 +92,23 @@ def _translate(exc: ValidationError) -> list[SpecError]:
             out.append(SpecError(Code.INVALID_VALUE, path,
                                  err["msg"].removeprefix("Value error, ")))
     return _dedupe(out)
+
+
+def _vega_lite_hint(parent: tuple, name: str) -> str | None:
+    """A hint for the Vega-Lite keys this framework deliberately does not have.
+
+    The dialect accepts Vega-Lite's spelling of what it does have, so a model
+    that knows Vega-Lite gets much further — and then trips on the parts that
+    have no equivalent. Saying what to use instead turns a dead end into one
+    more repair round.
+    """
+    if not parent and name in dialects.VL_UNSUPPORTED:
+        return (f"Vega-Lite's {name!r} has no equivalent here; "
+                f"{dialects.VL_UNSUPPORTED[name]}")
+    if parent == ("data",) and name in dialects.VL_DATA_SOURCE_KEYS:
+        return ("the DataFrame is an argument to plot(), not part of the contract; "
+                "'data' here means filters, sort and limit")
+    return None
 
 
 def _fmt_path(loc: tuple) -> str:

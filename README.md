@@ -43,7 +43,7 @@ it is wrong the failure is actionable.
 uv sync            # or: pip install -e ".[seaborn,streamlit]"
 ```
 
-## Two dialects
+## Three dialects
 
 The flat dialect is what an agent writes first. It normalizes into the canonical
 spec, which is what the framework actually executes:
@@ -66,6 +66,21 @@ spec, which is what the framework actually executes:
 
 Both are accepted everywhere. When a contract carries both, the canonical block
 wins.
+
+**Vega-Lite is accepted too.** `mark`, `timeUnit`, `shape`, `row`/`column`,
+`"type": "Q"`, a channel-level `sort` or `stack`, `width`/`height`, `$schema` —
+all translated. What has no equivalent here (`transform`, `layer`, `params`, a
+`data` source) is not silently ignored: it fails with a hint naming what to use
+instead.
+
+```json
+{"mark": "bar",
+ "encoding": {"x": {"field": "revenue", "type": "Q", "aggregate": "sum"},
+              "y": {"field": "region", "type": "N"}}}
+```
+
+That one draws horizontal bars, because in Vega-Lite that is what swapping the
+channels means.
 
 ## Chart types
 

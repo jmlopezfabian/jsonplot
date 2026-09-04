@@ -39,7 +39,7 @@ fig.savefig("chart.png", dpi=150, bbox_inches="tight")
 `plot` returns a `matplotlib.figure.Figure` unless the contract asks for
 something else (`"format": "png" | "svg" | "base64"`).
 
-## Two dialects, one meaning
+## Three dialects, one meaning
 
 The **flat** dialect is short and is what a model writes first:
 
@@ -62,9 +62,23 @@ once color, faceting or per-channel aggregation appear:
 }
 ```
 
-Both are accepted everywhere, and the first normalizes into the second. When a
-contract carries both, the canonical block wins. The full vocabulary is on
-[The contract](CONTRACT.md).
+And **Vega-Lite** is accepted as well, because the canonical dialect was shaped
+after it: `mark`, `timeUnit`, `shape`, `row`/`column`, `"type": "Q"`, a
+channel-level `sort` or `stack`, `width`/`height` in pixels.
+
+```json
+{"mark": "bar",
+ "encoding": {"x": {"field": "revenue", "type": "Q", "aggregate": "sum"},
+              "y": {"field": "region", "type": "N"}}}
+```
+
+That draws horizontal bars: swapping the channels is how Vega-Lite says so.
+What it has and this does not — `transform`, `layer`, `params`, a `data` source
+— fails with a hint naming the nearest equivalent rather than being ignored.
+
+All three are accepted everywhere, and they normalize into the canonical shape.
+When a contract carries both spellings, the canonical one wins. The full
+vocabulary is on [The contract](CONTRACT.md).
 
 ## Check before you draw
 

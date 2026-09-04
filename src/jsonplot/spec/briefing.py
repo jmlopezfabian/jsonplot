@@ -40,7 +40,7 @@ Format = Literal["markdown", "json"]
 #: Sections, in the order they are written. Selectable through `include`.
 SECTION_NAMES = (
     "overview", "shape", "types", "channels", "data", "style", "output",
-    "flat", "rules", "example",
+    "flat", "vega_lite", "rules", "example",
 )
 
 
@@ -315,6 +315,63 @@ def _flat() -> str:
     return "\n".join(lines)
 
 
+def _vega_lite() -> str:
+    """The Vega-Lite section — the tables in `dialects`, rendered.
+
+    Worth its space only when the contract goes through `normalize()`. An agent
+    whose output is parsed straight into `Spec` (a pydantic `output_type`, say)
+    should leave this section out: there the canonical spelling is the only one
+    that exists.
+    """
+    lines = [
+        "## Vega-Lite spellings",
+        "",
+        "If you know Vega-Lite, write it and it will be translated. The canonical",
+        "spec above is deliberately shaped like it — same `encoding`, same channel",
+        "roles, same field definitions — so most of a Vega-Lite chart already is a",
+        "valid contract.",
+        "",
+        "Accepted, and what each becomes:",
+        "",
+        "| Vega-Lite | here |",
+        "| --- | --- |",
+        "| `mark` (a string, or `{\"type\": ...}`) | `viz_type` |",
+    ]
+    marks = sorted(dialects._VL_MARK_VALUES)
+    for mark in sorted(dialects._VL_MARK_VALUES):
+        lines.append(f"| `\"mark\": \"{mark}\"` | "
+                     f"`\"viz_type\": \"{dialects._VIZ_VALUES[mark]}\"` |")
+    for name, role in sorted(dialects._VL_CHANNELS.items()):
+        lines.append(f"| `encoding.{name}` | `encoding.{role}` |")
+    lines += [
+        "| `timeUnit` | `time_unit`; the `year…` forms map to the bucket they name |",
+        f"| `\"type\": \"Q\"` / `\"N\"` / `\"O\"` / `\"T\"` | "
+        f"{_list(_vocab(models.Channel, 'type'))} |",
+        f"| {_list(sorted(dialects._VL_AGGREGATES))} | "
+        + ", ".join(f"`{dialects._VL_AGGREGATES[a]}`"
+                    for a in sorted(dialects._VL_AGGREGATES)) + " |",
+        "| `scale: {\"type\": \"log\"}` | `scale: \"log\"` |",
+        "| `axis: {\"title\": …}`, `legend: {\"title\": …}` | the channel's `title` |",
+        "| a channel's `sort` (`\"-y\"`, `\"descending\"`, `{\"field\": …}`) | `data.sort` |",
+        "| a channel's `stack` | `style.stacked` |",
+        f"| `width` and `height`, in pixels | `style.figsize`, in inches "
+        f"(at {dialects.VL_PIXELS_PER_INCH:.0f} px/inch) |",
+        "| `$schema` | dropped; it names a Vega-Lite version, and this is not one |",
+        "",
+        "**Not accepted**, because there is no equivalent — each fails with a hint",
+        "pointing at the nearest thing that exists:",
+        "",
+    ]
+    for name, instead in dialects.VL_UNSUPPORTED.items():
+        lines.append(f"- `{name}` — {instead}")
+    lines += [
+        "",
+        "And `data` here is not Vega-Lite's `data`: the DataFrame is passed to the",
+        "renderer separately, so this block holds filters, sorting and limits only.",
+    ]
+    return "\n".join(lines)
+
+
 def _rules() -> str:
     return "\n".join([
         "## Rules the validator enforces",
@@ -373,6 +430,7 @@ _SECTIONS = {
     "style": _style,
     "output": _output,
     "flat": _flat,
+    "vega_lite": _vega_lite,
     "rules": _rules,
     "example": _example,
 }

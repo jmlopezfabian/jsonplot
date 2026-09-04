@@ -135,8 +135,14 @@ uv run python evals/local_llm.py --model qwen2.5:7b-instruct
 | Prompt | Correct outcomes |
 | --- | --- |
 | columns + a sentence naming the flat keys | 6 / 12 |
+| columns + "write me Vega-Lite", translated by the dialect | 5 / 12 |
 | columns + the generated contract | 11 / 12 |
 | …plus one repair round | 12 / 12 |
+
+Accepting Vega-Lite's spelling is worth doing — it costs a lookup table and it
+means a contract in the dialect a model knows best does not die on vocabulary —
+but the second row is the honest result: it does not replace the document. What
+still fails there is semantics, not spelling.
 
 The eval is also how the document gets edited. Its first run showed the model
 omitting `aggregate` on half the contracts: the rule was in the document, stated

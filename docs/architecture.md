@@ -55,6 +55,50 @@ Titles, grid, legend and facets are the driver's job, identical for every type.
 If a renderer ever needed to filter or aggregate something, the abstraction
 would be in the wrong place.
 
+## Three dialects in, one shape out
+
+`spec/dialects.py` is the only place a contract can be spelled more than one
+way. Downstream, everything sees the canonical spec.
+
+| Dialect | What it is | Why it is accepted |
+|---|---|---|
+| canonical | `encoding` with a channel per role | what the framework executes |
+| flat | `x_axis`, `y_axis`, `agg`, `group_by` | the first thing a model writes unprompted |
+| Vega-Lite | `mark`, `timeUnit`, `shape`, `row`/`column`, a channel-level `sort` | a decade old and all over the training data; the canonical spec was shaped after it |
+
+The Vega-Lite half is a lookup table plus four rewrites that move a value to
+where it lives here: a channel's `sort` becomes `data.sort`, its `stack` becomes
+`style.stacked`, `width`/`height` in pixels become `figsize` in inches, and a
+bar chart with the measure on x and the category on y — Vega-Lite's way of
+saying "horizontal" — swaps its channels and sets `style.orientation`. That last
+one fires only when the contract declares the types or an aggregate; guessing
+from the data would belong in the binder, not in a dialect.
+
+What Vega-Lite has and this does not (`transform`, `layer`, `params`, `config`,
+a `data` source) is **not** dropped. It survives into validation, and `parse.py`
+turns each into a hint naming the nearest thing that does exist. The only
+exception is `$schema`, which names a spec language this is not.
+
+### What it is worth, measured
+
+Adding a fourth condition to `evals/local_llm.py` — ask the model for a
+Vega-Lite spec, say nothing at all about this framework, and let the dialect
+translate:
+
+| Prompt | Correct outcomes |
+|---|---|
+| columns + a sentence naming the flat keys | 6 / 12 |
+| columns + "write me Vega-Lite" | 5 / 12 |
+| columns + the generated contract | 11 / 12 |
+| …plus one repair round | 12 / 12 |
+
+So the dialect does **not** replace the briefing, and it was worth measuring
+rather than assuming. What is left failing in that column is not spelling — it
+is `transform`, `params`, an `axis` config, and a missing `aggregate`, which are
+things this framework genuinely does not do or genuinely requires. The value is
+narrower than it looks from the alias table: a Vega-Lite-shaped contract stops
+dying on vocabulary, and when it still dies, it says what to use instead.
+
 ## Order of operations
 
 Fixed, and declared in `transform/pipeline.py`:

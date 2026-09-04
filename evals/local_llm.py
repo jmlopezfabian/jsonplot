@@ -61,6 +61,11 @@ SYSTEM = ("You produce visualization contracts. Reply with one JSON object and "
 BARE = ("Produce a JSON chart specification for the DataFrame below. Use keys "
         "like viz_type, x_axis, y_axis, agg, title.\n\n")
 
+#: The condition that asks for a language the model already knows, and leans on
+#: the dialect to translate it. Nothing about this framework is in the prompt.
+VEGA = ("Produce a Vega-Lite v5 specification for the DataFrame below. "
+        "The data is already loaded, so omit the `data` block.\n\n")
+
 
 def ollama(model: str, system: str, user: str, timeout: int = 180) -> str:
     payload = json.dumps({
@@ -118,6 +123,7 @@ def run_task(model: str, df, prompt: str, task: str, repair: bool):
 
 CONDITIONS = {
     "bare": dict(repair=False),
+    "vega_lite": dict(repair=False),
     "briefing": dict(repair=False),
     "briefing+repair": dict(repair=True),
 }
@@ -135,6 +141,7 @@ def main() -> int:
     tasks = [t for t in TASKS if not args.tasks or t[0] in args.tasks]
     prompts = {
         "bare": BARE + agent.columns(df),
+        "vega_lite": VEGA + agent.columns(df),
         "briefing": agent.context(df),
         "briefing+repair": agent.context(df),
     }
