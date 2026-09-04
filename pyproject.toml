@@ -4,6 +4,9 @@ version = "0.1.0"
 description = "A JSON contract plus a DataFrame renders a matplotlib or seaborn figure"
 readme = "README.md"
 requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Jesús Manuel López Fabián", email = "jmlopezfabian@gmail.com" }]
 dependencies = [
     "pydantic>=2.7",
     "pandas>=2.1",

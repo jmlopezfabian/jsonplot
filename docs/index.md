@@ -107,3 +107,7 @@ this does not draw; a rejection is the correct outcome and is scored as one.</sm
 -   [**Architecture**](architecture.md) — the pipeline, and how to add a chart type.
 
 </div>
+
+---
+
+MIT licensed. Copyright © 2026 Jesús Manuel López Fabián.

@@ -187,3 +187,8 @@ build** by `scripts/gen_docs.py` — the charts are rendered, the CLI help comes
 from argparse, the error codes from the `Code` class. A push to `main` deploys
 it to GitHub Pages (`.github/workflows/docs.yml`), and the workflow refuses to
 deploy if `docs/CONTRACT.md` no longer matches what the code generates.
+
+## License
+
+MIT — see [LICENSE](LICENSE). Use it, change it, ship it in something you sell;
+just keep the copyright notice. It comes with no warranty.
